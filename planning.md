@@ -16,36 +16,46 @@ You must have at least 3 tools. The three required tools are listed — add any 
 
 **What it does:**
 <!-- Describe what this tool does in 1–2 sentences -->
+This tool will take in information from the query that, and then use the key information from the query to compare against the loaded listings, to see if they can find any piece of clothing that would meet the users request.
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
-- `description` (str): ...
-- `size` (str): ...
-- `max_price` (float): ...
+- `description` (str): 
+  The description parameter represents, some defining information about the piece of clothing. 
+- `size` (str):
+  The size parameter represents the sizing of the specific piece of clothing necessary.
+- `max_price` (float): 
+  The max_price parameter represents the most amount of money the piece of clothing can be for the user to still want to purchase.
 
 **What it returns:**
 <!-- Describe the return value — what fields does a result contain? -->
+A list of listing dictionaries. In other words, every listing that matches with the search_listing() tool's parameters from the user's query will be returned.
 
 **What happens if it fails or returns nothing:**
 <!-- What should the agent do if no listings match? -->
-
+The agent will not use another tool, and instead what to try differently.
 ---
 
 ### Tool 2: suggest_outfit
 
 **What it does:**
 <!-- Describe what this tool does in 1–2 sentences -->
+The suggest outfit tool takes the top listing, or in other words the one that matches the query the most, and the user's wardrobe to give suggestions based off their wardrobe, or if the user's wardrobe is empty it will give general styling tips.
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
-- `new_item` (dict): ...
-- `wardrobe` (dict): ...
+- `new_item` (dict): 
+  A dictionary of the listing that most matches the query.
+- `wardrobe` (dict): 
+  A dictionary of the users wardrobes, the pieces of clothing that they own.
 
 **What it returns:**
 <!-- Describe the return value -->
+This tool will return a string that would either contain the styling tips or the suggestion based off their wardrobe.
 
 **What happens if it fails or returns nothing:**
 <!-- What should the agent do if the wardrobe is empty or no outfit can be suggested? -->
+General styling advice with the piece of clothing will be given.
 
 ---
 
@@ -138,12 +148,17 @@ Write out what a full user interaction looks like from start to finish — tool 
 
 **Step 1:**
 <!-- What does the agent do first? Which tool is called? With what input? -->
+The first step is to call search_listings(), which takes the user's query, size, and max price as parameters. Before that, load_listings() has to run internally so the search actually has listings to compare against. If search_listings() returns nothing, the agent tells the user to try something different like a broader query or higher price cap and stops there without calling anything else.
 
 **Step 2:**
 <!-- What happens next? What was returned from step 1? What tool is called now? -->
+What comes back from Step 1 is a list of matching listing dictionaries. We take the top result and pass the full listing object as new_item, along with the user's wardrobe object from get_example_wardrobe(), into suggest_outfit(). This returns a string with outfit suggestions built around both the new piece and what's already in the wardrobe.
 
 **Step 3:**
 <!-- Continue until the full interaction is complete -->
+The suggestion string, along with the new_item listing object, gets passed into create_fit_card(). This tool returns a social media caption written around the clothing item and the outfit. If it fails, return a curated error message.
+
 
 **Final output to user:**
 <!-- What does the user actually see at the end? -->
+The user sees the top listing details, the outfit suggestion, and the generated caption put together as one holistic response.
