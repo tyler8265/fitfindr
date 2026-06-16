@@ -190,15 +190,17 @@ Write out what a full user interaction looks like from start to finish — tool 
 
 **Step 1:**
 <!-- What does the agent do first? Which tool is called? With what input? -->
-The first step is to call search_listings(), which takes the user's query, size, and max price as parameters. Before that, load_listings() has to run internally so the search actually has listings to compare against. If search_listings() returns nothing, the agent tells the user to try something different like a broader query or higher price cap and stops there without calling anything else.
+
+The first step is to call search_listings("vintage graphic tee", size=None, max_price=30.0), which takes the user's query, size, and max price as parameters. Before that, load_listings() has to run internally so the search actually has listings to compare against. If search_listings() returns nothing, the agent tells the user to try something different like a broader query or higher price cap and stops there without calling anything else.
 
 **Step 2:**
 <!-- What happens next? What was returned from step 1? What tool is called now? -->
-What comes back from Step 1 is a list of matching listing dictionaries. We take the top result and pass the full listing object as new_item, along with the user's wardrobe object from get_example_wardrobe(), into suggest_outfit(). This returns a string with outfit suggestions built around both the new piece and what's already in the wardrobe.
+
+What comes back from Step 1 is a list of matching listing dictionaries — for example, "Faded Band Tee — $22, Depop, Good condition" as the top result. We take that top result and pass the full listing object as new_item, along with the user's wardrobe object from get_example_wardrobe(), into suggest_outfit(new_item=<band tee>, wardrobe=<user's wardrobe>). This returns a string with outfit suggestions built around both the new piece and what's already in the wardrobe, something like "Pair this with your wide-leg jeans and chunky sneakers for a classic 90s look."
 
 **Step 3:**
 <!-- Continue until the full interaction is complete -->
-The suggestion string, along with the new_item listing object, gets passed into create_fit_card(). This tool returns a social media caption written around the clothing item and the outfit. If it fails, return a curated error message.
+That suggestion string, along with the new_item listing object, gets passed into create_fit_card(outfit=<suggestion>, new_item=<band tee>). This tool returns a social media caption written around the clothing item and the outfit, something like "thrifted this faded band tee off depop for $22 and it was made for my baggy jeans 🖤". If it fails, return a curated error message.
 
 
 **Final output to user:**
