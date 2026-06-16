@@ -33,7 +33,7 @@ A list of listing dictionaries. In other words, every listing that matches with 
 
 **What happens if it fails or returns nothing:**
 <!-- What should the agent do if no listings match? -->
-The agent will not use another tool, and instead what to try differently.
+The agent will not use another tool, and instead tells the user what to try differently, so that it can find matched listings.
 ---
 
 ### Tool 2: suggest_outfit
@@ -63,17 +63,20 @@ General styling advice with the piece of clothing will be given.
 
 **What it does:**
 <!-- Describe what this tool does in 1–2 sentences -->
+This tool's primary task is to use the title/name of the outfit and the actual item listing as a parameter to create a instagram caption based off of them. 
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
-- `outfit` (...): ...
+- `outfit` (str): 
+  A string that is the suggestion from the suggest_outfit() tool.
+  A dictionary of the listing that most matches the query.
 
 **What it returns:**
 <!-- Describe the return value -->
-
+It will return a string, this string will be the instagram caption.
 **What happens if it fails or returns nothing:**
 <!-- What should the agent do if the outfit data is incomplete? -->
-
+It will return an error message, NOT an exception.
 ---
 
 ### Additional Tools (if any)
@@ -86,14 +89,18 @@ General styling advice with the piece of clothing will be given.
 
 **How does your agent decide which tool to call next?**
 <!-- Describe the logic your planning loop uses. What does it look at? What conditions change its behavior? How does it know when it's done? -->
+search_listings() is first called and ran. If no listings match, or in other words an empty list is returned, the agent will give the user a suggestion and re-prompt to help them find a listing that matches their query. If there are listings that match, the agent will store the top result as session["selected_item"] and use that listing dictionary as one of the parameters for the suggest_outfit() tool, and the suggest_outfit() tool will be called and ran. If the suggest_outfit() tool's wardrobe parameter is empty, it will still run and return a string with general styling advice for the user rather than crashing. If it is successful, it will return an outfit suggestion based on the clothing pieces in their current wardrobe, and that result gets stored as session["outfit_suggestion"].
 
+Once session["outfit_suggestion"] is set, create_fit_card() is called with the suggestion string and session["selected_item"]. If the outfit string is empty or missing, create_fit_card() returns an error message string rather than raising an exception. The result gets stored as session["fit_card"].
+
+The agent knows it's done when session["fit_card"] is set, or when an empty result from search_listings() triggers an early return.
 ---
 
 ## State Management
 
 **How does information from one tool get passed to the next?**
 <!-- Describe how your agent stores and accesses state within a session. What data is tracked? How is it passed between tool calls? -->
-
+I plan to create a dictionary for the specific session, for all the returned values from the tools. The data that is tracked would be the listings, the outfit suggestions, the captions, and the errors. It will be passed between tools as parameters.
 ---
 
 ## Error Handling
@@ -119,6 +126,38 @@ For each tool, describe the specific failure mode you're handling and what the a
      sketch are all fine. You'll share this diagram with an AI tool when asking it to implement
      the planning loop and each individual tool. -->
 
+User query
+    │
+    ▼
+Planning Loop
+    │
+    ├─► search_listings(description, size, max_price)
+    │       │ results=[]
+    │       ├──► [ERROR] "Try a broader description or higher price cap" → return
+    │       │
+    │       │ results=[item, ...]
+    │       ▼
+    │   selected_item = results[0]
+    │       │
+    ├─► suggest_outfit(selected_item, wardrobe)
+    │       │ wardrobe empty
+    │       ├──► returns general styling advice string (no crash)
+    │       │
+    │       │ wardrobe has items
+    │       ▼
+    │   outfit_suggestion = "..."
+    │       │
+    └─► create_fit_card(outfit_suggestion, selected_item)
+            │ outfit is empty
+            ├──► returns error message string (no crash)
+            │
+            │ success
+            ▼
+        fit_card = "..."
+            │
+            ▼
+    Final output to user
+
 ---
 
 ## AI Tool Plan
@@ -136,8 +175,11 @@ For each tool, describe the specific failure mode you're handling and what the a
 
 **Milestone 3 — Individual tool implementations:**
 
+I'm going to implement each tool myself using the spec I wrote in planning.md as my guide. I'll start with search_listings, making sure it filters by all three parameters and returns an empty list when nothing matches. Then suggest_outfit, handling the empty wardrobe case without crashing. Then create_fit_card, making sure it returns an error message string instead of an exception. If I get stuck on anything I'll ask Claude specific questions, but I want to write the code myself so I actually understand what each tool is doing before I wire them together.
+
 **Milestone 4 — Planning loop and state management:**
 
+I'm going to implement run_agent() myself using my planning loop description and architecture diagram as reference. I'll make sure the branching logic actually responds to what search_listings returns rather than calling all three tools unconditionally. If something isn't behaving right I'll ask Claude to help me debug a specific part, but the implementation will be mine.
 ---
 
 ## A Complete Interaction (Step by Step)
