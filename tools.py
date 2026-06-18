@@ -72,18 +72,18 @@ def search_listings(
     # Replace this with your implementation
     listings = load_listings()
     matches = []
-    if size:
-      size_options = set(size.upper().replace('/',' ').split(' '))
+
     for item in listings:
       if max_price is not None and item['price'] > max_price:
-        continue
-      if size is not None and size in size_options:
-        continue
+          continue
+      if size is not None and size.upper() not in item['size'].upper().replace('/', ' ').split():
+          continue
       matches.append(item)
-    keywords = description.lower().split(' ')
+
+    keywords = description.lower().split()
     scores = {}
     for item in matches:
-      score = sum(1 for kw in keywords if kw in item['title'].lower() or kw in item['description'].lower())
+      score = sum(1 for keyword in keywords if keyword in item['title'].lower() or keyword in item['description'].lower())
       scores[item['id']] = score
 
     matches = [item for item in matches if scores[item['id']] > 0]
@@ -116,8 +116,41 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
 
     Before writing code, fill in the Tool 2 section of planning.md.
     """
-    # Replace this with your implementation
-    return ""
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    
+    wardrobe_items = wardrobe.get("items", [])
+    
+    if wardrobe_items:
+      wardrobe_text = "\n".join(
+        f"- {item['name']} ({item['category']})" for item in wardrobe_items
+      )
+      prompt = f"""You are a fashion stylist. A user just found this secondhand item:
+
+  Item: {new_item['title']}
+  Description: {new_item['description']}
+  Colors: {', '.join(new_item['colors'])}
+  Style tags: {', '.join(new_item['style_tags'])}
+
+  Their current wardrobe includes:
+  {wardrobe_text}
+
+  Suggest one complete outfit using the new item and pieces from their wardrobe. Be specific."""
+    else:
+        prompt = f"""You are a fashion stylist. A user just found this secondhand item:
+
+  Item: {new_item['title']}
+  Description: {new_item['description']}
+  Colors: {', '.join(new_item['colors'])}
+  Style tags: {', '.join(new_item['style_tags'])}
+
+  They haven't added any wardrobe items yet. Give them general styling advice for this piece."""
+
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    
+    return response.choices[0].message.content
 
 
 # ── Tool 3: create_fit_card ───────────────────────────────────────────────────
@@ -150,4 +183,25 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
     Before writing code, fill in the Tool 3 section of planning.md.
     """
     # Replace this with your implementation
-    return ""
+    if not outfit or not outfit.strip():
+      return "Couldn't generate a fit card — outfit suggestion was empty."
+    
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    
+    prompt = f"""You are writing a casual, authentic Instagram caption for a thrifted outfit post.
+
+New item: {new_item['title']}
+Price: ${new_item['price']}
+Platform: {new_item['platform']}
+Outfit suggestion: {outfit}
+
+Write a short, natural caption like something a real person would post — not a brand. 
+Keep it under 3 sentences. Include an emoji or two. Make it sound genuine, not promotional."""
+
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=1.0
+    )
+    
+    return response.choices[0].message.content

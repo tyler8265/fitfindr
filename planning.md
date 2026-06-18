@@ -109,9 +109,9 @@ For each tool, describe the specific failure mode you're handling and what the a
 
 | Tool | Failure mode | Agent response |
 |------|-------------|----------------|
-| search_listings | No results match the query | |
-| suggest_outfit | Wardrobe is empty | |
-| create_fit_card | Outfit input is missing or incomplete | |
+| search_listings | No results match the query | The agent tells the user to try a broader description or higher price cap and stops |
+| suggest_outfit | Wardrobe is empty | The tool still runs and returns a string with general styling advice for the new item instead of crashing |
+| create_fit_card | Outfit input is missing or incomplete | The tool returns an error message string instead of raising an exception |
 
 ---
 

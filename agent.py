@@ -19,7 +19,7 @@ Usage (once implemented):
 """
 
 from tools import search_listings, suggest_outfit, create_fit_card
-
+import re
 
 # ── session state ─────────────────────────────────────────────────────────────
 
@@ -94,7 +94,40 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     """
     # TODO: implement the planning loop
     session = _new_session(query, wardrobe)
-    session["error"] = "Planning loop not yet implemented."
+
+    size_match = re.search(r'\b(XS|S|M|L|XL|XXL)\b', query, re.IGNORECASE)
+    price_match = re.search(r'\$(\d+(?:\.\d{1,2})?)', query)
+
+    parsed = {
+        "description": query,
+        "size": size_match.group(0).upper() if size_match else None,
+        "max_price": float(price_match.group(1)) if price_match else None
+    }
+    session["parsed"] = parsed
+
+    results = search_listings(
+        description=parsed["description"],
+        size=parsed["size"],
+        max_price=parsed["max_price"]
+    )
+    session["search_results"] = results
+
+    if not results:
+        session["error"] = "No listings matched your query. Try a broader description or a higher price cap."
+        return session
+
+    session["selected_item"] = results[0]
+
+    session["outfit_suggestion"] = suggest_outfit(
+        new_item=session["selected_item"],
+        wardrobe=wardrobe
+    )
+
+    session["fit_card"] = create_fit_card(
+        outfit=session["outfit_suggestion"],
+        new_item=session["selected_item"]
+    )
+
     return session
 
 
