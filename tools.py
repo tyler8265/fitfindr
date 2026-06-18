@@ -70,8 +70,24 @@ def search_listings(
     Before writing code, fill in the Tool 1 section of planning.md.
     """
     # Replace this with your implementation
-    return []
+    listings = load_listings()
+    matches = []
+    if size:
+      size_options = set(size.upper().replace('/',' ').split(' '))
+    for item in listings:
+      if max_price is not None and item['price'] > max_price:
+        continue
+      if size is not None and size in size_options:
+        continue
+      matches.append(item)
+    keywords = description.lower().split(' ')
+    scores = {}
+    for item in matches:
+      score = sum(1 for kw in keywords if kw in item['title'].lower() or kw in item['description'].lower())
+      scores[item['id']] = score
 
+    matches = [item for item in matches if scores[item['id']] > 0]
+    return sorted(matches, key=lambda x: scores[x['id']], reverse=True)
 
 # ── Tool 2: suggest_outfit ────────────────────────────────────────────────────
 
